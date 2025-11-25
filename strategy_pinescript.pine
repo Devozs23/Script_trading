@@ -36,12 +36,12 @@ isNearLevel(price, level) =>
     math.abs(price - level) <= levelTolerance
 
 // Función para obtener niveles en rango
-getLevelsInRange(price, range) =>
+getLevelsInRange(price, priceRange) =>
     nearest = getNearestLevel(price)
     levels = array.new_float()
     for i = -10 to 10
         level = nearest + (i * levelIncrement)
-        if math.abs(level - price) <= range
+        if math.abs(level - price) <= priceRange
             array.push(levels, level)
     levels
 
