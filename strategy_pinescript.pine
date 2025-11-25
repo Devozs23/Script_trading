@@ -47,26 +47,12 @@ getLevelsInRange(price, priceRange) =>
 
 // ==================== DETECCIÓN DE SWING POINTS ====================
 
-// Detectar Swing High
-isSwingHigh(lookback) =>
-    isHigh = true
-    for i = 1 to lookback
-        if high[i] >= high or high[i] >= high
-            isHigh := false
-            break
-    isHigh
+// Usar funciones built-in de Pine Script para pivots
+pivotHigh = ta.pivothigh(high, swingPeriod, swingPeriod)
+pivotLow = ta.pivotlow(low, swingPeriod, swingPeriod)
 
-// Detectar Swing Low
-isSwingLow(lookback) =>
-    isLow = true
-    for i = 1 to lookback
-        if low[i] <= low or low[i] <= low
-            isLow := false
-            break
-    isLow
-
-swingHigh = isSwingHigh(swingPeriod)
-swingLow = isSwingLow(swingPeriod)
+swingHigh = not na(pivotHigh)
+swingLow = not na(pivotLow)
 
 // ==================== DETECCIÓN DE TENDENCIA ====================
 
@@ -107,19 +93,21 @@ calculateTrendStrength() =>
 
     math.min(normalizedSlope * 100 * rSquared, 1.0)
 
-// Detectar dirección de tendencia
+// Detectar dirección de tendencia basada en pivots
 var float lastSwingHigh = na
 var float prevSwingHigh = na
 var float lastSwingLow = na
 var float prevSwingLow = na
 
-if swingHigh
+// Guardar swing highs
+if not na(pivotHigh)
     prevSwingHigh := lastSwingHigh
-    lastSwingHigh := high
+    lastSwingHigh := pivotHigh
 
-if swingLow
+// Guardar swing lows
+if not na(pivotLow)
     prevSwingLow := lastSwingLow
-    lastSwingLow := low
+    lastSwingLow := pivotLow
 
 // Tendencia alcista: Higher Highs y Higher Lows
 isBullish = not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow) and lastSwingHigh > prevSwingHigh and lastSwingLow > prevSwingLow
@@ -140,15 +128,17 @@ isNear = isNearLevel(currentPrice, nearestLevel)
 wickBelowLevel = low < nearestLevel and close > nearestLevel
 wickAboveLevel = high > nearestLevel and close < nearestLevel
 
-// Señal de COMPRA
-longCondition = isBullish and isNear and currentPrice <= nearestLevel + levelTolerance and wickBelowLevel
+// Señal de COMPRA - Simplificada para generar más señales
+// Comprar cuando el precio está cerca de un nivel Y (tendencia alcista O rebote confirmado)
+longCondition = isNear and currentPrice <= nearestLevel + levelTolerance and (isBullish or wickBelowLevel)
 if requireTrendConfirmation
-    longCondition := longCondition and isTrendConfirmed
+    longCondition := longCondition and (isTrendConfirmed or wickBelowLevel)
 
-// Señal de VENTA
-shortCondition = isBearish and isNear and currentPrice >= nearestLevel - levelTolerance and wickAboveLevel
+// Señal de VENTA - Simplificada para generar más señales
+// Vender cuando el precio está cerca de un nivel Y (tendencia bajista O rechazo confirmado)
+shortCondition = isNear and currentPrice >= nearestLevel - levelTolerance and (isBearish or wickAboveLevel)
 if requireTrendConfirmation
-    shortCondition := shortCondition and isTrendConfirmed
+    shortCondition := shortCondition and (isTrendConfirmed or wickAboveLevel)
 
 // ==================== EJECUCIÓN DE TRADES ====================
 
