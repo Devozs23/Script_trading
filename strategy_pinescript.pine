@@ -198,8 +198,8 @@ plotshape(showSwings and swingHigh, "Swing High", shape.triangledown, location.a
 plotshape(showSwings and swingLow, "Swing Low", shape.triangleup, location.belowbar, color.green, size=size.tiny)
 
 // Colorear fondo según tendencia
-bgcolor(showTrendInfo and isBullish ? color.new(color.green, 95) :
-        showTrendInfo and isBearish ? color.new(color.red, 95) : na)
+bgColor = showTrendInfo and isBullish ? color.new(color.green, 95) : showTrendInfo and isBearish ? color.new(color.red, 95) : na
+bgcolor(bgColor)
 
 // Mostrar información en tabla
 if showTrendInfo
