@@ -42,24 +42,44 @@ cp .env.example .env
 
 ## Uso
 
-### Prueba rápida (sin broker)
+### 🧪 Prueba rápida (datos sintéticos)
 ```bash
 python quick_test.py
 ```
 
-### Backtesting con datos sintéticos
+### 📊 Backtesting con Datos Reales de TradingView
 ```bash
-python backtesting.py
+# Primero instalar dependencias de TradingView
+pip install tradingview-ta tvDatafeed
+
+# Backtest con MGC
+python backtest_with_tradingview.py --symbol MGC1! --timeframe 5min --bars 1000
+
+# Otros futuros
+python backtest_with_tradingview.py --symbol GC1! --timeframe 15min --bars 500
+python backtest_with_tradingview.py --symbol ES1! --exchange CME --timeframe 5min
 ```
 
-### Trading en vivo (Demo primero)
+### 🌲 Usar Pine Script en TradingView
+1. Abre TradingView.com
+2. Busca el símbolo: `MGC1!` (Micro Gold)
+3. Abre Pine Editor
+4. Copia el contenido de `strategy_pinescript.pine`
+5. Clic en "Add to Chart"
+6. Configura parámetros y ejecuta backtest
+
+Ver guía completa: [TRADINGVIEW_SETUP.md](TRADINGVIEW_SETUP.md)
+
+### 🤖 Bot con Datos Reales de TradingView
 ```bash
-# SIEMPRE probar en demo primero
+# Modo demo con datos reales de TradingView
 python bot.py --mode demo --interval 60
+
+# Sin TradingView (datos sintéticos)
+python bot.py --mode demo --no-tradingview
 ```
 
-### Trading en vivo (Real)
-⚠️ **SOLO después de pruebas exhaustivas en demo**
+### ⚠️ Trading en Vivo (SOLO después de pruebas exhaustivas)
 ```bash
 python bot.py --mode live
 ```
@@ -84,17 +104,24 @@ Edita `config.py` para ajustar:
 
 ```
 Script_trading/
-├── README.md                 # Este archivo
-├── requirements.txt          # Dependencias
-├── config.py                 # Configuración centralizada
-├── level_detector.py         # Detecta niveles psicológicos (0.5 increments)
-├── trend_detector.py         # Detecta inicio de tendencias
-├── trading_strategy.py       # Lógica de trading y señales
-├── backtesting.py            # Motor de backtesting
-├── bot.py                    # Bot principal para trading en vivo
-├── quick_test.py             # Script de prueba rápida
-└── .env.example              # Plantilla de configuración
-
+├── README.md                      # Este archivo
+├── TRADINGVIEW_SETUP.md           # Guía completa de TradingView
+├── DEVELOPMENT_NOTES.md           # Notas de desarrollo
+├── requirements.txt               # Dependencias
+├── config.py                      # Configuración centralizada
+│
+├── level_detector.py              # Detecta niveles psicológicos (0.5 increments)
+├── trend_detector.py              # Detecta inicio de tendencias
+├── trading_strategy.py            # Lógica de trading y señales
+│
+├── tradingview_data.py            # 📡 Obtiene datos de TradingView
+├── strategy_pinescript.pine       # 🌲 Versión Pine Script para TradingView
+│
+├── backtesting.py                 # Motor de backtesting (datos sintéticos)
+├── backtest_with_tradingview.py   # 📊 Backtest con datos reales
+├── bot.py                         # Bot principal para trading
+├── quick_test.py                  # Script de prueba rápida
+└── .env.example                   # Plantilla de configuración
 ```
 
 ## Próximos Pasos (Roadmap)

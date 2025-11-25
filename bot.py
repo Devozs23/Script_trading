@@ -12,43 +12,69 @@ import sys
 from trading_strategy import LevelTradingStrategy, SignalType
 from level_detector import LevelDetector
 from trend_detector import TrendDetector
+from tradingview_data import TradingViewDataFetcher
 import config
 
 
 class TradingBot:
     """Bot de trading principal"""
 
-    def __init__(self, mode: str = "demo"):
+    def __init__(self, mode: str = "demo", use_tradingview: bool = True):
         self.mode = mode
+        self.use_tradingview = use_tradingview
         self.strategy = LevelTradingStrategy()
         self.level_detector = LevelDetector()
         self.trend_detector = TrendDetector()
         self.active_positions = []
         self.trade_log = []
 
+        # Inicializar TradingView data fetcher si está habilitado
+        self.tv_fetcher = None
+        if use_tradingview:
+            try:
+                self.tv_fetcher = TradingViewDataFetcher()
+                if self.tv_fetcher.tv:
+                    print("✅ TradingView data fetcher habilitado")
+            except Exception as e:
+                print(f"⚠️  Error al inicializar TradingView: {e}")
+                print("   Usando datos sintéticos")
+                self.use_tradingview = False
+
         print(f"🤖 Trading Bot iniciado en modo: {mode.upper()}")
         print(f"📊 Símbolo: {config.SYMBOL}")
         print(f"⏱️  Timeframe: {config.TIMEFRAME}")
-        print(f"💰 Riesgo por trade: {config.RISK_PER_TRADE * 100}%\n")
+        print(f"💰 Riesgo por trade: {config.RISK_PER_TRADE * 100}%")
+        print(f"📡 Fuente de datos: {'TradingView' if self.use_tradingview and self.tv_fetcher else 'Sintéticos'}\n")
 
     def get_market_data(self) -> pd.DataFrame:
         """
         Obtiene datos del mercado
 
-        En producción, esto se conectaría a MT5 o un broker real.
-        Por ahora, retorna datos de ejemplo.
+        Usa TradingView si está disponible, sino datos sintéticos.
 
         Returns:
             DataFrame con datos OHLCV
         """
-        # TODO: Implementar conexión real a MT5 o broker
-        # import MetaTrader5 as mt5
-        # rates = mt5.copy_rates_from_pos(config.SYMBOL, timeframe, 0, 100)
-        # df = pd.DataFrame(rates)
+        # Intentar obtener datos de TradingView
+        if self.use_tradingview and self.tv_fetcher and self.tv_fetcher.tv:
+            try:
+                df = self.tv_fetcher.get_mgc_data(
+                    timeframe=config.TIMEFRAME,
+                    bars=100
+                )
 
-        print("⚠️  USANDO DATOS DE EJEMPLO - Implementar conexión a broker real")
+                if df is not None and not df.empty:
+                    return df
 
-        # Datos de ejemplo para testing
+                print("⚠️  No se pudieron obtener datos de TradingView, usando sintéticos")
+
+            except Exception as e:
+                print(f"⚠️  Error al obtener datos de TradingView: {e}")
+                print("   Usando datos sintéticos")
+
+        # Fallback: Datos sintéticos para testing
+        print("⚠️  USANDO DATOS SINTÉTICOS")
+
         import numpy as np
 
         dates = pd.date_range(end=datetime.now(), periods=100, freq='5min')
@@ -242,6 +268,8 @@ def main():
                        help='Modo de ejecución (demo o live)')
     parser.add_argument('--interval', type=int, default=60,
                        help='Intervalo en segundos entre análisis')
+    parser.add_argument('--no-tradingview', action='store_true',
+                       help='No usar TradingView (usar datos sintéticos)')
 
     args = parser.parse_args()
 
@@ -254,7 +282,9 @@ def main():
             print("Cancelado.")
             sys.exit(0)
 
-    bot = TradingBot(mode=args.mode)
+    use_tv = not args.no_tradingview
+
+    bot = TradingBot(mode=args.mode, use_tradingview=use_tv)
     bot.run(interval_seconds=args.interval)
 
 

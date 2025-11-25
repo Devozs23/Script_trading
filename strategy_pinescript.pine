@@ -1,0 +1,236 @@
+//@version=5
+strategy("MGC Level Trading Bot", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// ==================== CONFIGURACIÓN ====================
+// Niveles psicológicos
+levelIncrement = input.float(0.5, "Incremento de Nivel", minval=0.1, maxval=1.0, step=0.1)
+levelTolerance = input.float(0.2, "Tolerancia de Nivel", minval=0.05, maxval=0.5, step=0.05)
+
+// Detección de tendencia
+trendLookback = input.int(20, "Barras para Tendencia", minval=10, maxval=50)
+swingPeriod = input.int(10, "Período de Swing", minval=5, maxval=20)
+minTrendStrength = input.float(0.6, "Fuerza Mínima de Tendencia", minval=0.1, maxval=1.0, step=0.1)
+
+// Gestión de riesgo
+riskPercent = input.float(2.0, "Riesgo por Trade (%)", minval=0.5, maxval=5.0, step=0.5)
+stopLossPoints = input.float(2.0, "Stop Loss (puntos)", minval=0.5, maxval=10.0, step=0.5)
+takeProfitPoints = input.float(3.0, "Take Profit (puntos)", minval=1.0, maxval=20.0, step=0.5)
+
+// Filtros
+requireTrendConfirmation = input.bool(true, "Requiere Confirmación de Tendencia")
+minBounceRate = input.float(0.4, "Tasa Mínima de Rebote", minval=0.2, maxval=0.8, step=0.1)
+
+// Visualización
+showLevels = input.bool(true, "Mostrar Niveles")
+showSwings = input.bool(true, "Mostrar Swings")
+showTrendInfo = input.bool(true, "Mostrar Info de Tendencia")
+
+// ==================== FUNCIONES DE NIVELES ====================
+
+// Función para obtener el nivel más cercano
+getNearestLevel(price) =>
+    math.round(price / levelIncrement) * levelIncrement
+
+// Función para verificar si el precio está cerca de un nivel
+isNearLevel(price, level) =>
+    math.abs(price - level) <= levelTolerance
+
+// Función para obtener niveles en rango
+getLevelsInRange(price, range) =>
+    nearest = getNearestLevel(price)
+    levels = array.new_float()
+    for i = -10 to 10
+        level = nearest + (i * levelIncrement)
+        if math.abs(level - price) <= range
+            array.push(levels, level)
+    levels
+
+// ==================== DETECCIÓN DE SWING POINTS ====================
+
+// Detectar Swing High
+isSwingHigh(lookback) =>
+    isHigh = true
+    for i = 1 to lookback
+        if high[i] >= high or high[i] >= high
+            isHigh := false
+            break
+    isHigh
+
+// Detectar Swing Low
+isSwingLow(lookback) =>
+    isLow = true
+    for i = 1 to lookback
+        if low[i] <= low or low[i] <= low
+            isLow := false
+            break
+    isLow
+
+swingHigh = isSwingHigh(swingPeriod)
+swingLow = isSwingLow(swingPeriod)
+
+// ==================== DETECCIÓN DE TENDENCIA ====================
+
+// Calcular fuerza de tendencia usando regresión lineal
+calculateTrendStrength() =>
+    sumX = 0.0
+    sumY = 0.0
+    sumXY = 0.0
+    sumX2 = 0.0
+
+    for i = 0 to trendLookback - 1
+        x = float(i)
+        y = close[trendLookback - 1 - i]
+        sumX := sumX + x
+        sumY := sumY + y
+        sumXY := sumXY + (x * y)
+        sumX2 := sumX2 + (x * x)
+
+    n = float(trendLookback)
+    slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+
+    // Normalizar slope
+    avgPrice = sumY / n
+    normalizedSlope = math.abs(slope) / avgPrice
+
+    // Calcular R²
+    meanY = sumY / n
+    ssRes = 0.0
+    ssTot = 0.0
+
+    for i = 0 to trendLookback - 1
+        y = close[trendLookback - 1 - i]
+        yPred = slope * i + (sumY - slope * sumX) / n
+        ssRes := ssRes + math.pow(y - yPred, 2)
+        ssTot := ssTot + math.pow(y - meanY, 2)
+
+    rSquared = ssTot > 0 ? 1 - (ssRes / ssTot) : 0
+
+    math.min(normalizedSlope * 100 * rSquared, 1.0)
+
+// Detectar dirección de tendencia
+var float lastSwingHigh = na
+var float prevSwingHigh = na
+var float lastSwingLow = na
+var float prevSwingLow = na
+
+if swingHigh
+    prevSwingHigh := lastSwingHigh
+    lastSwingHigh := high
+
+if swingLow
+    prevSwingLow := lastSwingLow
+    lastSwingLow := low
+
+// Tendencia alcista: Higher Highs y Higher Lows
+isBullish = not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow) and lastSwingHigh > prevSwingHigh and lastSwingLow > prevSwingLow
+
+// Tendencia bajista: Lower Highs y Lower Lows
+isBearish = not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow) and lastSwingHigh < prevSwingHigh and lastSwingLow < prevSwingLow
+
+trendStrength = calculateTrendStrength()
+isTrendConfirmed = trendStrength >= minTrendStrength
+
+// ==================== LÓGICA DE SEÑALES ====================
+
+currentPrice = close
+nearestLevel = getNearestLevel(currentPrice)
+isNear = isNearLevel(currentPrice, nearestLevel)
+
+// Confirmación de rebote en vela
+wickBelowLevel = low < nearestLevel and close > nearestLevel
+wickAboveLevel = high > nearestLevel and close < nearestLevel
+
+// Señal de COMPRA
+longCondition = isBullish and isNear and currentPrice <= nearestLevel + levelTolerance and wickBelowLevel
+if requireTrendConfirmation
+    longCondition := longCondition and isTrendConfirmed
+
+// Señal de VENTA
+shortCondition = isBearish and isNear and currentPrice >= nearestLevel - levelTolerance and wickAboveLevel
+if requireTrendConfirmation
+    shortCondition := shortCondition and isTrendConfirmed
+
+// ==================== EJECUCIÓN DE TRADES ====================
+
+if longCondition and strategy.position_size == 0
+    stopLoss = nearestLevel - stopLossPoints
+    takeProfit = currentPrice + takeProfitPoints
+
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit Long", "Long", stop=stopLoss, limit=takeProfit)
+
+if shortCondition and strategy.position_size == 0
+    stopLoss = nearestLevel + stopLossPoints
+    takeProfit = currentPrice - takeProfitPoints
+
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Exit Short", "Short", stop=stopLoss, limit=takeProfit)
+
+// Cerrar si la tendencia se revierte
+if strategy.position_size > 0 and isBearish and isTrendConfirmed
+    strategy.close("Long", comment="Trend Reversal")
+
+if strategy.position_size < 0 and isBullish and isTrendConfirmed
+    strategy.close("Short", comment="Trend Reversal")
+
+// ==================== VISUALIZACIÓN ====================
+
+// Dibujar niveles
+if showLevels
+    levelsInRange = getLevelsInRange(close, 5)
+    for i = 0 to array.size(levelsInRange) - 1
+        level = array.get(levelsInRange, i)
+        line.new(bar_index - 50, level, bar_index, level,
+                 color=color.new(color.gray, 70),
+                 style=line.style_dotted,
+                 width=1)
+
+// Marcar nivel más cercano
+var line nearestLevelLine = na
+if showLevels
+    line.delete(nearestLevelLine)
+    nearestLevelLine := line.new(bar_index - 20, nearestLevel, bar_index, nearestLevel,
+                                  color=isNear ? color.yellow : color.gray,
+                                  width=2)
+
+// Marcar swing points
+plotshape(showSwings and swingHigh, "Swing High", shape.triangledown, location.abovebar, color.red, size=size.tiny)
+plotshape(showSwings and swingLow, "Swing Low", shape.triangleup, location.belowbar, color.green, size=size.tiny)
+
+// Colorear fondo según tendencia
+bgcolor(showTrendInfo and isBullish ? color.new(color.green, 95) :
+        showTrendInfo and isBearish ? color.new(color.red, 95) : na)
+
+// Mostrar información en tabla
+if showTrendInfo
+    var table infoTable = table.new(position.top_right, 2, 6,
+                                     bgcolor=color.new(color.black, 85),
+                                     frame_width=1,
+                                     frame_color=color.gray)
+
+    table.cell(infoTable, 0, 0, "Tendencia:", text_color=color.white)
+    table.cell(infoTable, 1, 0, isBullish ? "ALCISTA" : isBearish ? "BAJISTA" : "NEUTRAL",
+               text_color=isBullish ? color.green : isBearish ? color.red : color.gray)
+
+    table.cell(infoTable, 0, 1, "Fuerza:", text_color=color.white)
+    table.cell(infoTable, 1, 1, str.tostring(trendStrength, "#.##"),
+               text_color=isTrendConfirmed ? color.green : color.orange)
+
+    table.cell(infoTable, 0, 2, "Precio:", text_color=color.white)
+    table.cell(infoTable, 1, 2, str.tostring(close, "#.##"), text_color=color.white)
+
+    table.cell(infoTable, 0, 3, "Nivel cercano:", text_color=color.white)
+    table.cell(infoTable, 1, 3, str.tostring(nearestLevel, "#.#"),
+               text_color=isNear ? color.yellow : color.gray)
+
+    table.cell(infoTable, 0, 4, "Distancia:", text_color=color.white)
+    table.cell(infoTable, 1, 4, str.tostring(math.abs(close - nearestLevel), "#.##"),
+               text_color=color.white)
+
+    table.cell(infoTable, 0, 5, "Confirmada:", text_color=color.white)
+    table.cell(infoTable, 1, 5, isTrendConfirmed ? "✓" : "✗",
+               text_color=isTrendConfirmed ? color.green : color.red)
+
+// Alertas
+alertcondition(longCondition, "Señal LONG", "🟢 Señal de COMPRA en {{ticker}} @ {{close}}")
+alertcondition(shortCondition, "Señal SHORT", "🔴 Señal de VENTA en {{ticker}} @ {{close}}")
