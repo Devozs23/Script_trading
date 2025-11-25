@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 strategy("MGC Level Trading Bot", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // ==================== CONFIGURACIÓN ====================
@@ -218,9 +218,9 @@ if showTrendInfo
                text_color=color.white)
 
     table.cell(infoTable, 0, 5, "Confirmada:", text_color=color.white)
-    table.cell(infoTable, 1, 5, isTrendConfirmed ? "✓" : "✗",
+    table.cell(infoTable, 1, 5, isTrendConfirmed ? "SI" : "NO",
                text_color=isTrendConfirmed ? color.green : color.red)
 
 // Alertas
-alertcondition(longCondition, "Señal LONG", "🟢 Señal de COMPRA en {{ticker}} @ {{close}}")
-alertcondition(shortCondition, "Señal SHORT", "🔴 Señal de VENTA en {{ticker}} @ {{close}}")
+alertcondition(longCondition, "Señal LONG", "Señal de COMPRA en {{ticker}} @ {{close}}")
+alertcondition(shortCondition, "Señal SHORT", "Señal de VENTA en {{ticker}} @ {{close}}")
