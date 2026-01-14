@@ -1,0 +1,219 @@
+/* TS Protector Pro - Dark Gaming Theme */
+
+/* Main Window */
+QMainWindow {
+    background-color: #0d1117;
+}
+
+QWidget {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+}
+
+/* Title Label */
+#titleLabel {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #58a6ff;
+    padding: 10px;
+}
+
+/* Status Label */
+#statusLabel {
+    font-size: 12pt;
+    font-weight: bold;
+    padding: 5px;
+}
+
+#ipLabel {
+    font-size: 11pt;
+    color: #8b949e;
+    padding: 5px;
+}
+
+/* Connect Button */
+#connectButton {
+    background-color: #238636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 15px;
+    font-size: 14pt;
+    font-weight: bold;
+    min-height: 50px;
+}
+
+#connectButton:hover {
+    background-color: #2ea043;
+}
+
+#connectButton:pressed {
+    background-color: #1f7a2f;
+}
+
+#connectButton[connected="true"] {
+    background-color: #da3633;
+}
+
+#connectButton[connected="true"]:hover {
+    background-color: #f85149;
+}
+
+#connectButton[connected="true"]:pressed {
+    background-color: #c93026;
+}
+
+/* Group Boxes */
+QGroupBox {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: bold;
+    color: #58a6ff;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
+    color: #58a6ff;
+}
+
+/* CheckBox */
+QCheckBox {
+    spacing: 8px;
+    color: #c9d1d9;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 1px solid #30363d;
+    background-color: #161b22;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #238636;
+    border-color: #238636;
+    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEzLjc4IDQuMjJhLjc1Ljc1IDAgMDEwIDEuMDZsLTcuMjUgNy4yNWEuNzUuNzUgMCAwMS0xLjA2IDBMMi4yMiA5LjI4YS43NS43NSAwIDAxMS4wNi0xLjA2TDYgMTAuOTRsNi43Mi02LjcyYS43NS43NSAwIDAxMS4wNiAweiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==);
+}
+
+QCheckBox::indicator:hover {
+    border-color: #58a6ff;
+}
+
+/* ComboBox */
+QComboBox {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: #c9d1d9;
+    min-height: 25px;
+}
+
+QComboBox:hover {
+    border-color: #58a6ff;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #8b949e;
+    width: 0;
+    height: 0;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    selection-background-color: #1f6feb;
+    color: #c9d1d9;
+}
+
+/* TextEdit for Activity Log */
+QTextEdit {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 8px;
+    color: #c9d1d9;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+}
+
+/* ScrollBar */
+QScrollBar:vertical {
+    background-color: #161b22;
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #30363d;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #484f58;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Labels with colors */
+.success {
+    color: #3fb950;
+}
+
+.error {
+    color: #f85149;
+}
+
+.warning {
+    color: #d29922;
+}
+
+.info {
+    color: #58a6ff;
+}
+
+/* Separator */
+QFrame[frameShape="4"] { /* HLine */
+    background-color: #30363d;
+    max-height: 1px;
+}
+
+/* Status indicator */
+#statusIndicator {
+    border-radius: 6px;
+    min-width: 12px;
+    max-width: 12px;
+    min-height: 12px;
+    max-height: 12px;
+}
+
+#statusIndicator[status="connected"] {
+    background-color: #3fb950;
+}
+
+#statusIndicator[status="disconnected"] {
+    background-color: #6e7681;
+}
+
+#statusIndicator[status="connecting"] {
+    background-color: #d29922;
+}
